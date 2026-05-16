@@ -1,6 +1,7 @@
 package com.example.pawconnect.ui.screens
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -12,11 +13,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -24,95 +28,102 @@ import com.example.pawconnect.Screen
 import com.example.pawconnect.R
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.auth.FirebaseUser
-
 
 @Composable
 fun LoginScreen(navController: NavController) {
-    // Estados para cada campo
     var tipoCuenta by remember { mutableStateOf("Selecciona tipo de cuenta") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf("") }
+    var isLoading by remember { mutableStateOf(false) }
 
-    val auth = FirebaseAuth.getInstance() // FirebaseAuth instance
-    val firestore = FirebaseFirestore.getInstance() // Firestore instance
+    val auth = FirebaseAuth.getInstance()
+    val firestore = FirebaseFirestore.getInstance()
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // Imagen de fondo
+        // Imagen de fondo con blur
         Image(
             painter = painterResource(id = R.drawable.background_dogs),
             contentDescription = "Fondo de perros",
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .blur(12.dp),
             contentScale = ContentScale.Crop
         )
+
+        // Overlay semi-transparente
+        Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.3f)))
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 24.dp),
+                .padding(horizontal = 32.dp),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Logo
             Image(
                 painter = painterResource(id = R.drawable.logo_pawconnect),
                 contentDescription = "Logo PawConnect",
-                modifier = Modifier.size(200.dp)
+                modifier = Modifier.size(180.dp)
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
-            // Tarjeta blanca
             Card(
-                shape = RoundedCornerShape(16.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp)
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)),
+                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+                modifier = Modifier.fillMaxWidth()
             ) {
                 Column(
-                    modifier = Modifier.padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    modifier = Modifier.padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
+                    Text(
+                        "Bienvenido",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+
                     TipoCuentaDropdown(
                         tipoCuentaSeleccionado = tipoCuenta,
                         onTipoCuentaChange = { tipoCuenta = it }
                     )
-                    Spacer(modifier = Modifier.height(10.dp))
 
-                    // Campo de correo electrónico
                     OutlinedTextField(
                         value = email,
-                        onValueChange = { nuevoValor ->
-                            if (nuevoValor.matches(Regex("^[A-Za-z0-9@._-]*$"))) {
-                                email = nuevoValor
-                            }
-                        },
+                        onValueChange = { if (it.matches(Regex("^[A-Za-z0-9@._-]*$"))) email = it },
                         label = { Text("Correo electrónico") },
-                        leadingIcon = { Icon(Icons.Filled.Email, contentDescription = "Correo") },
+                        leadingIcon = { Icon(Icons.Filled.Email, contentDescription = null) },
                         modifier = Modifier.fillMaxWidth(),
                         keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Email),
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(16.dp),
+                        enabled = !isLoading
                     )
 
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    // Campo de contraseña
                     OutlinedTextField(
                         value = password,
                         onValueChange = { password = it },
                         label = { Text("Contraseña") },
-                        leadingIcon = { Icon(Icons.Filled.Lock, contentDescription = "Contraseña") },
+                        leadingIcon = { Icon(Icons.Filled.Lock, contentDescription = null) },
                         modifier = Modifier.fillMaxWidth(),
-                       keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Password),
+                        keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Password),
                         visualTransformation = PasswordVisualTransformation(),
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(16.dp),
+                        enabled = !isLoading
                     )
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    if (errorMessage.isNotEmpty()) {
+                        Text(
+                            text = errorMessage,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                            textAlign = TextAlign.Center
+                        )
+                    }
 
-                    // Botón "Iniciar Sesión"
                     Button(
                         onClick = {
                             errorMessage = ""
@@ -122,63 +133,61 @@ fun LoginScreen(navController: NavController) {
                                 !isValidEmail(email) ->
                                     errorMessage = "El correo electrónico no es válido."
                                 else -> {
-                                    // Intentamos iniciar sesión con Firebase Auth
+                                    isLoading = true
                                     auth.signInWithEmailAndPassword(email, password)
                                         .addOnCompleteListener { task ->
                                             if (task.isSuccessful) {
-                                                val user = auth.currentUser
-                                                // Verificamos si el usuario existe en la base de datos
-                                                user?.let { firebaseUser ->
+                                                val firebaseUser = auth.currentUser
+                                                firebaseUser?.let { user ->
                                                     firestore.collection("users")
-                                                        .document(firebaseUser.uid)
+                                                        .document(user.uid)
                                                         .get()
                                                         .addOnSuccessListener { document ->
-                                                            // Aquí se pueden manejar los datos del usuario
-                                                            val userName = document.getString("name") ?: "Usuario"
-                                                            // Verificar el tipo de cuenta
-                                                            if (tipoCuenta == "Refugio") {
-                                                                // Si el tipo de cuenta es Refugio, navega a ShelterHomeScreen
-                                                                navController.navigate(Screen.ShelterHome.route)
+                                                            isLoading = false
+                                                            if (document.exists()) {
+                                                                val rolEnDB = document.getString("tipoCuenta")
+                                                                if (rolEnDB == tipoCuenta) {
+                                                                    val route = if (tipoCuenta == "Refugio") Screen.ShelterHome.route else Screen.UserHome.route
+                                                                    navController.navigate(route) {
+                                                                        popUpTo(Screen.Login.route) { inclusive = true }
+                                                                    }
+                                                                } else {
+                                                                    errorMessage = "El tipo de cuenta no coincide."
+                                                                    auth.signOut()
+                                                                }
                                                             } else {
-                                                                // Si el tipo de cuenta es Usuario, navega a UserHome
-                                                                navController.navigate(Screen.UserHome.route)
+                                                                errorMessage = "Usuario no encontrado."
+                                                                auth.signOut()
                                                             }
                                                         }
                                                         .addOnFailureListener {
-                                                            errorMessage = "Error al obtener datos del usuario."
+                                                            isLoading = false
+                                                            errorMessage = "Error al obtener datos."
                                                         }
                                                 }
                                             } else {
-                                                errorMessage = "Credenciales incorrectas"
+                                                isLoading = false
+                                                errorMessage = "Credenciales incorrectas."
                                             }
                                         }
                                 }
                             }
                         },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary, // Color dinámico
-                            contentColor = MaterialTheme.colorScheme.onPrimary // Color del texto dinámico
-                        )
+                        modifier = Modifier.fillMaxWidth().height(56.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        enabled = !isLoading
                     ) {
-                        Text("Iniciar Sesión", fontSize = 16.sp)
+                        if (isLoading) {
+                            CircularProgressIndicator(modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 2.dp)
+                        } else {
+                            Text("Iniciar Sesión", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                        }
                     }
 
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    // Link de registro
-                    Text(
-                        text = "¿No tienes una cuenta? -> Regístrate aquí",
-                        color = MaterialTheme.colorScheme.tertiary, // Color adaptativo
-                        modifier = Modifier
-                            .clickable { navController.navigate(Screen.Register.route) }
-                            .padding(8.dp)
-                    )
-
-                    // Mensaje de error
-                    if (errorMessage.isNotEmpty()) {
-                        Text(errorMessage, color = MaterialTheme.colorScheme.error)
+                    TextButton(
+                        onClick = { if (!isLoading) navController.navigate(Screen.Register.route) }
+                    ) {
+                        Text("¿No tienes cuenta? Regístrate aquí", color = MaterialTheme.colorScheme.primary)
                     }
                 }
             }

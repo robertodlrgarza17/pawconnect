@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -20,213 +21,215 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.pawconnect.R
 import com.example.pawconnect.Screen
 import com.example.pawconnect.ui.screens.components.UserBottomNavBar
+import com.example.pawconnect.ui.screens.components.ShelterBottomNavBar
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.delay
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GuiaDeAdopcion(navController: NavController) {
+    var userType by remember { mutableStateOf("") }
+    val auth = FirebaseAuth.getInstance()
+    val db = FirebaseFirestore.getInstance()
+
+    LaunchedEffect(Unit) {
+        val userId = auth.currentUser?.uid
+        if (userId != null) {
+            db.collection("users").document(userId).get().addOnSuccessListener { doc ->
+                userType = doc.getString("tipoCuenta") ?: ""
+            }
+        }
+    }
+
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
-                    Image(
-                        painter = painterResource(id = R.drawable.logo_pawconnectuniendocorazonescambiandovidas),
-                        contentDescription = "Logo PawConnect",
-                        modifier = Modifier.size(250.dp)
+                    Text(
+                        "Guía de Adopción",
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimary
                     )
                 },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(
-                            painter = painterResource(id = R.drawable.icon_huella),
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Regresar",
                             tint = MaterialTheme.colorScheme.onPrimary
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary
                 )
             )
         },
         bottomBar = {
-            UserBottomNavBar(
-                onHuellasClick = { navController.navigate(Screen.Pets.route) },
-                onHomeClick = { navController.navigate(Screen.Home.route) },
-                onPerfilClick = { navController.navigate(Screen.Profile.route) }
-            )
+            if (userType == "Refugio") {
+                ShelterBottomNavBar(
+                    onHuellasClick = { navController.navigate(Screen.ShelterPets.route) },
+                    onHomeClick = { navController.navigate(Screen.ShelterHome.route) },
+                    onPerfilClick = { navController.navigate(Screen.ShelterProfile.route) }
+                )
+            } else {
+                UserBottomNavBar(
+                    onHuellasClick = { navController.navigate(Screen.Pets.route) },
+                    onHomeClick = { navController.navigate(Screen.Home.route) },
+                    onPerfilClick = { navController.navigate(Screen.Profile.route) }
+                )
+            }
         }
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState()) // Permite desplazamiento
+                .verticalScroll(rememberScrollState())
                 .padding(innerPadding)
-                .padding(horizontal = 16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-            ) {
-
-                Text(
-                    text = "GUÍA DE ADOPCIÓN",
-                    fontSize = 20.sp,
-                    style = MaterialTheme.typography.titleLarge,
-                    color = Color.Blue,
-                    fontWeight = FontWeight.Bold,
-                    //modifier = Modifier.padding(start = 12.dp) // Espaciado entre la flecha y el texto
-                )
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
+            // Header Image/Logo
+            Image(
+                painter = painterResource(id = R.drawable.logo_pawconnect),
+                contentDescription = "Logo",
+                modifier = Modifier.size(120.dp)
+            )
 
             Text(
-                text = "Descubre cómo puedes cambiar una vida y encontrar un amigo para siempre",
-                fontSize = 16.sp,
+                text = "¡Encuentra a tu mejor amigo!",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary,
                 textAlign = TextAlign.Center
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "Descubre cómo puedes cambiar una vida y encontrar un compañero para siempre.",
+                style = MaterialTheme.typography.bodyLarge,
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
 
-            // Sección "¿Por qué adoptar?"
+            // Section: Why Adopt?
+            AdoptionGuideCard(
+                title = "¿Por qué adoptar?",
+                description = "Al adoptar no solo cambias la vida de un animal, sino que también contribuyes a reducir el problema de mascotas sin hogar.",
+                icon = R.drawable.ic_qm,
+                containerColor = Color(0xFFD4C3FC)
+            )
+
+            // Section: Adoption Process
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFD4C3FC)) // Color lila
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFF2B6DE).copy(alpha = 0.8f))
             ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.ic_qm),
-                        contentDescription = "Question Mark",
-                        modifier = Modifier.size(32.dp)
-                    )
-
-                    Spacer(modifier = Modifier.width(8.dp))
-
-                    Column {
-                        Text(
-                            text = "¿Por qué adoptar?",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp
-                        )
-                        Text(
-                            text = "Al adoptar no solo cambias la vida de un animal, sino que también contribuyes a reducir el problema de mascotas sin hogar en Nuevo León.",
-                            fontSize = 14.sp
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Sección "Proceso de Adopción"
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFF2B6DE)) // Color rosa
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
+                Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     Text(
                         text = "Proceso de Adopción",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
                     )
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    AdoptionStep(
+                        icon = R.drawable.ic_uc,
+                        title = "1. Prepárate",
+                        description = "Asegúrate de tener el tiempo, espacio y recursos necesarios para cuidar a un nuevo integrante."
+                    )
 
-                    // Paso 1 - Prepararte para adoptar
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Image(
-                            painter = painterResource(id = R.drawable.ic_uc),
-                            contentDescription = "User Check",
-                            modifier = Modifier.size(32.dp)
-                        )
-
-                        Spacer(modifier = Modifier.width(8.dp))
-
-                        Column {
-                            Text(
-                                text = "Prepárate para adoptar",
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 14.sp
-                            )
-                            Text(
-                                text = "Asegúrate de tener el tiempo, espacio y recursos necesarios para cuidar a una mascota.",
-                                fontSize = 14.sp
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    // Paso 2 - Encuentra tu compañero ideal
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Image(
-                            painter = painterResource(id = R.drawable.ic_heart),
-                            contentDescription = "Heart",
-                            modifier = Modifier.size(32.dp)
-                        )
-
-                        Spacer(modifier = Modifier.width(8.dp))
-
-                        Column {
-                            Text(
-                                text = "Encuentra tu compañero ideal",
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 14.sp
-                            )
-                            Text(
-                                text = "Explora los perfiles de mascotas y elige una que se ajuste a tu estilo de vida.",
-                                fontSize = 14.sp
-                            )
-                        }
-                    }
+                    AdoptionStep(
+                        icon = R.drawable.ic_heart,
+                        title = "2. Encuentra tu compañero",
+                        description = "Explora los perfiles y elige una mascota que se ajuste a tu estilo de vida."
+                    )
                 }
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            // Image Carousel
+            CarouselSection()
 
-            val imageList = listOf(
-                R.drawable.refugio_dogs_1,
-                R.drawable.refugio_dogs_2,
-                R.drawable.refugio_dogs_3
-            )
-            var currentImageIndex by remember { mutableStateOf(0) }
-
-            LaunchedEffect(key1 = currentImageIndex) {
-                delay(5000) // Espera 5 segundos
-                currentImageIndex = (currentImageIndex + 1) % imageList.size
-            }
-
-            Image(
-                painter = painterResource(id = imageList[currentImageIndex]),
-                contentDescription = "Imagen del proceso de adopción",
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp),
-                contentScale = ContentScale.Crop
-            )
             Spacer(modifier = Modifier.height(16.dp))
-
         }
     }
 }
 
+@Composable
+fun AdoptionGuideCard(title: String, description: String, icon: Int, containerColor: Color) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = containerColor.copy(alpha = 0.8f))
+    ) {
+        Row(
+            modifier = Modifier.padding(20.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Icon(
+                painter = painterResource(id = icon),
+                contentDescription = null,
+                modifier = Modifier.size(40.dp),
+                tint = Color.Unspecified
+            )
+            Column {
+                Text(text = title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                Text(text = description, style = MaterialTheme.typography.bodyMedium)
+            }
+        }
+    }
+}
+
+@Composable
+fun AdoptionStep(icon: Int, title: String, description: String) {
+    Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Icon(
+            painter = painterResource(id = icon),
+            contentDescription = null,
+            modifier = Modifier.size(32.dp),
+            tint = Color.Unspecified
+        )
+        Column {
+            Text(text = title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium)
+            Text(text = description, style = MaterialTheme.typography.bodySmall)
+        }
+    }
+}
+
+@Composable
+fun CarouselSection() {
+    val imageList = listOf(
+        R.drawable.refugio_dogs_1,
+        R.drawable.refugio_dogs_2,
+        R.drawable.refugio_dogs_3
+    )
+    var currentImageIndex by remember { mutableStateOf(0) }
+
+    LaunchedEffect(key1 = currentImageIndex) {
+        delay(5000)
+        currentImageIndex = (currentImageIndex + 1) % imageList.size
+    }
+
+    Card(
+        shape = RoundedCornerShape(20.dp),
+        elevation = CardDefaults.cardElevation(4.dp)
+    ) {
+        Image(
+            painter = painterResource(id = imageList[currentImageIndex]),
+            contentDescription = "Carrusel",
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(220.dp),
+            contentScale = ContentScale.Crop
+        )
+    }
+}

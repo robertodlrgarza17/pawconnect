@@ -6,6 +6,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -43,7 +44,9 @@ fun ShelterProfileScreen(navController: NavController) {
                 .get()
                 .addOnSuccessListener { document ->
                     if (document.exists()) {
-                        name = document.getString("name") ?: "Nombre no disponible"
+                        val nombre = document.getString("nombre") ?: ""
+                        val apellido = document.getString("apellido") ?: ""
+                        name = "$nombre $apellido".trim().ifEmpty { "Nombre no disponible" }
                         email = document.getString("email") ?: "Correo no disponible"
                     } else {
                         errorMessage = "No se encontró información"
@@ -64,6 +67,15 @@ fun ShelterProfileScreen(navController: NavController) {
         topBar = {
             CenterAlignedTopAppBar(
                 title = { Text("Mi Perfil", fontSize = 20.sp, fontWeight = FontWeight.Bold) },
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Regresar",
+                            tint = MaterialTheme.colorScheme.onPrimary
+                        )
+                    }
+                },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     titleContentColor = MaterialTheme.colorScheme.onPrimary
@@ -139,6 +151,8 @@ fun ShelterProfileScreen(navController: NavController) {
             Spacer(modifier = Modifier.height(16.dp))
 
             // Botones de opciones
+            ProfileButton("Modificar Perfil") { navController.navigate(Screen.EditProfileScreen.route) }
+            Spacer(modifier = Modifier.height(8.dp))
             ProfileButton("Revision de solicitudes") { navController.navigate(Screen.ShelterRevisionPetsScreen.route) }
             Spacer(modifier = Modifier.height(8.dp))
             ProfileButton("Guía de adopción") { navController.navigate(Screen.GuiaDeAdopcion.route) }

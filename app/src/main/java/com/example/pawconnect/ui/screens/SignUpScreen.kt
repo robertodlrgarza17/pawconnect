@@ -1,20 +1,26 @@
 package com.example.pawconnect.ui.screens
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -22,11 +28,9 @@ import com.example.pawconnect.Screen
 import com.example.pawconnect.R
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.auth.FirebaseUser
 
 @Composable
 fun SignUpScreen(navController: NavController) {
-    // Estados para cada campo
     var tipoCuenta by remember { mutableStateOf("Selecciona un tipo de cuenta") }
     var nombre by remember { mutableStateOf("") }
     var apellido by remember { mutableStateOf("") }
@@ -34,132 +38,135 @@ fun SignUpScreen(navController: NavController) {
     var telefono by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf("") }
+    var isLoading by remember { mutableStateOf(false) }
 
-    val auth = FirebaseAuth.getInstance() // FirebaseAuth instance
-    val firestore = FirebaseFirestore.getInstance() // Firestore instance
+    val auth = FirebaseAuth.getInstance()
+    val firestore = FirebaseFirestore.getInstance()
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // Imagen de fondo
         Image(
             painter = painterResource(id = R.drawable.background_dogs),
             contentDescription = "Fondo de perros",
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize().blur(12.dp),
             contentScale = ContentScale.Crop
         )
+
+        Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.3f)))
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 24.dp),
+                .padding(horizontal = 24.dp)
+                .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Logo PawConnect
+            Spacer(modifier = Modifier.height(32.dp))
+
             Image(
                 painter = painterResource(id = R.drawable.logo_pawconnect),
                 contentDescription = "Logo PawConnect",
-                modifier = Modifier.size(200.dp)
+                modifier = Modifier.size(150.dp)
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Tarjeta blanca para el formulario
             Card(
-                shape = RoundedCornerShape(16.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp)
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)),
+                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+                modifier = Modifier.fillMaxWidth().padding(bottom = 32.dp)
             ) {
                 Column(
-                    modifier = Modifier.padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    modifier = Modifier.padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    // Dropdown para Tipo de cuenta
+                    Text(
+                        "Crear Cuenta",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+
                     TipoCuentaDropdown(
                         tipoCuentaSeleccionado = tipoCuenta,
                         onTipoCuentaChange = { tipoCuenta = it }
                     )
 
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    // Campos de texto para los datos del usuario
                     OutlinedTextField(
                         value = nombre,
                         onValueChange = { nombre = it },
                         label = { Text("Nombre") },
-                        leadingIcon = { Icon(Icons.Filled.Person, contentDescription = "Nombre") },
+                        leadingIcon = { Icon(Icons.Filled.Person, contentDescription = null) },
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(16.dp),
+                        enabled = !isLoading
                     )
-
-                    Spacer(modifier = Modifier.height(10.dp))
 
                     OutlinedTextField(
                         value = apellido,
                         onValueChange = { apellido = it },
                         label = { Text("Apellido") },
-                        leadingIcon = { Icon(Icons.Filled.Person, contentDescription = "Apellido") },
+                        leadingIcon = { Icon(Icons.Filled.Person, contentDescription = null) },
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(16.dp),
+                        enabled = !isLoading
                     )
-
-                    Spacer(modifier = Modifier.height(10.dp))
 
                     OutlinedTextField(
                         value = email,
                         onValueChange = { email = it },
                         label = { Text("Correo electrónico") },
-                        leadingIcon = { Icon(Icons.Filled.Email, contentDescription = "Correo") },
+                        leadingIcon = { Icon(Icons.Filled.Email, contentDescription = null) },
                         modifier = Modifier.fillMaxWidth(),
                         keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Email),
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(16.dp),
+                        enabled = !isLoading
                     )
-
-                    Spacer(modifier = Modifier.height(10.dp))
 
                     OutlinedTextField(
                         value = telefono,
                         onValueChange = { telefono = it },
                         label = { Text("Teléfono") },
-                        leadingIcon = { Icon(Icons.Filled.Phone, contentDescription = "Teléfono") },
+                        leadingIcon = { Icon(Icons.Filled.Phone, contentDescription = null) },
                         modifier = Modifier.fillMaxWidth(),
                         keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(16.dp),
+                        enabled = !isLoading
                     )
-
-                    Spacer(modifier = Modifier.height(10.dp))
 
                     OutlinedTextField(
                         value = password,
                         onValueChange = { password = it },
                         label = { Text("Contraseña") },
-                        leadingIcon = { Icon(Icons.Filled.Lock, contentDescription = "Contraseña") },
+                        leadingIcon = { Icon(Icons.Filled.Lock, contentDescription = null) },
                         modifier = Modifier.fillMaxWidth(),
                         keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Password),
                         visualTransformation = PasswordVisualTransformation(),
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(16.dp),
+                        enabled = !isLoading
                     )
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    if (errorMessage.isNotEmpty()) {
+                        Text(errorMessage, color = MaterialTheme.colorScheme.error, textAlign = TextAlign.Center)
+                    }
 
-                    // Botón "Crear mi cuenta"
                     Button(
                         onClick = {
                             errorMessage = ""
                             when {
-                                tipoCuenta.isBlank() || nombre.isBlank() || apellido.isBlank() ||
+                                tipoCuenta.startsWith("Selecciona") || nombre.isBlank() || apellido.isBlank() ||
                                         email.isBlank() || telefono.isBlank() || password.isBlank() ->
                                     errorMessage = "Por favor, completa todos los campos."
+                                !isValidEmail(email) ->
+                                    errorMessage = "Correo no válido."
                                 else -> {
-                                    // Llamamos a Firebase Authentication para crear el usuario
+                                    isLoading = true
                                     auth.createUserWithEmailAndPassword(email, password)
                                         .addOnCompleteListener { task ->
                                             if (task.isSuccessful) {
-                                                val firebaseUser: FirebaseUser? = auth.currentUser
-                                                val userId = firebaseUser?.uid
-
-                                                // Guardamos los datos del usuario en Firestore
+                                                val userId = auth.currentUser?.uid
                                                 val user = hashMapOf(
                                                     "nombre" to nombre,
                                                     "apellido" to apellido,
@@ -169,40 +176,37 @@ fun SignUpScreen(navController: NavController) {
                                                 )
 
                                                 if (userId != null) {
-                                                    firestore.collection("users")
-                                                        .document(userId)
-                                                        .set(user)
+                                                    firestore.collection("users").document(userId).set(user)
                                                         .addOnSuccessListener {
-                                                            // Registro exitoso, navega a la pantalla de éxito
+                                                            isLoading = false
                                                             navController.navigate(Screen.Success.route)
                                                         }
                                                         .addOnFailureListener { e ->
-                                                            // Manejo de error en Firestore
-                                                            errorMessage = "Error al guardar los datos: ${e.message}"
+                                                            isLoading = false
+                                                            errorMessage = "Error: ${e.message}"
                                                         }
                                                 }
                                             } else {
-                                                errorMessage = "Error al crear la cuenta: ${task.exception?.message}"
+                                                isLoading = false
+                                                errorMessage = "Error: ${task.exception?.message}"
                                             }
                                         }
                                 }
                             }
                         },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary, // Color dinámico
-                            contentColor = MaterialTheme.colorScheme.onPrimary // Color del texto dinámico
-                        )
+                        modifier = Modifier.fillMaxWidth().height(56.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        enabled = !isLoading
                     ) {
-                        Text("Crear mi cuenta", fontSize = 16.sp)
+                        if (isLoading) {
+                            CircularProgressIndicator(modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.onPrimary)
+                        } else {
+                            Text("Crear mi cuenta", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                        }
                     }
 
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    // Mensaje de error
-                    if (errorMessage.isNotEmpty()) {
-                        Text(errorMessage, color = MaterialTheme.colorScheme.error)
+                    TextButton(onClick = { if (!isLoading) navController.popBackStack() }) {
+                        Text("¿Ya tienes cuenta? Inicia sesión", color = MaterialTheme.colorScheme.primary)
                     }
                 }
             }
@@ -210,6 +214,7 @@ fun SignUpScreen(navController: NavController) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TipoCuentaDropdown(
     tipoCuentaSeleccionado: String,
@@ -217,21 +222,21 @@ fun TipoCuentaDropdown(
 ) {
     var expanded by remember { mutableStateOf(false) }
 
-    Box {
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = !expanded }
+    ) {
         OutlinedTextField(
             value = tipoCuentaSeleccionado,
             onValueChange = {},
             label = { Text("Tipo de cuenta") },
             readOnly = true,
-            trailingIcon = {
-                IconButton(onClick = { expanded = !expanded }) {
-                    Icon(Icons.Filled.ArrowDropDown, contentDescription = "Desplegar menú")
-                }
-            },
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp)
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            modifier = Modifier.fillMaxWidth().menuAnchor(),
+            shape = RoundedCornerShape(16.dp),
+            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
         )
-        DropdownMenu(
+        ExposedDropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false }
         ) {

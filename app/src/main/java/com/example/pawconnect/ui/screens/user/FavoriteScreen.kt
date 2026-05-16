@@ -4,6 +4,8 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -70,7 +72,7 @@ fun FavoriteScreen(navController: NavController) {
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(
-                            painter = painterResource(id = R.drawable.icon_huella),
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Regresar",
                             tint = MaterialTheme.colorScheme.onPrimary
                         )

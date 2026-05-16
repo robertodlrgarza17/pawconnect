@@ -16,6 +16,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         // Inicializa Firebase
         FirebaseApp.initializeApp(this)
+        
         setContent {
             AppTheme {
                 Surface(color = MaterialTheme.colorScheme.background) {

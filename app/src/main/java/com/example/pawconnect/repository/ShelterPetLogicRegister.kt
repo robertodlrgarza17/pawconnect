@@ -21,7 +21,8 @@ data class PetData(
     val medicalCondition: String = "",
     val getAlongOtherAnimals: String = "",
     val getAlongKids: String = "",
-    val refugioId: String = ""  // Identifica al refugio que registró la mascota
+    val refugioId: String = "",
+    val isAdopted: Boolean = false // Nuevo campo para controlar visibilidad
 )
 
 /**
@@ -45,17 +46,18 @@ fun registerPet(
     getAlongKids: String,
     onComplete: (Boolean, String?) -> Unit
 ) {
-    // Obtiene el UID del refugio autenticado
     val userId = FirebaseAuth.getInstance().currentUser?.uid
     if (userId == null) {
         onComplete(false, "Usuario no autenticado")
         return
     }
 
-    // Crea el mapa de datos
+    // Normalizar especie para búsqueda consistente
+    val normalizedSpecies = petSpecies.trim().lowercase()
+
     val petData = hashMapOf(
         "petName" to petName,
-        "petSpecies" to petSpecies,
+        "petSpecies" to normalizedSpecies,
         "petBreed" to petBreed,
         "petSize" to petSize,
         "petWeight" to petWeight,
@@ -69,10 +71,10 @@ fun registerPet(
         "medicalCondition" to medicalCondition,
         "getAlongOtherAnimals" to getAlongOtherAnimals,
         "getAlongKids" to getAlongKids,
-        "refugioId" to userId
+        "refugioId" to userId,
+        "isAdopted" to false // Por defecto no está adoptada
     )
 
-    // Guarda en la colección global "mascotas"
     FirebaseFirestore.getInstance()
         .collection("mascotas")
         .add(petData)
@@ -89,7 +91,13 @@ fun fetchAllPets(onComplete: (Boolean, List<PetData>, String?) -> Unit) {
         .get()
         .addOnSuccessListener { querySnapshot ->
             val pets = querySnapshot.documents.mapNotNull { doc ->
-                doc.toObject(PetData::class.java)?.copy(id = doc.id)
+                // Verificamos el campo crudo primero para evitar problemas de parseo
+                val isAdoptedRaw = doc.getBoolean("isAdopted") ?: false
+                if (isAdoptedRaw) {
+                    null
+                } else {
+                    doc.toObject(PetData::class.java)?.copy(id = doc.id)
+                }
             }
             onComplete(true, pets, null)
         }
@@ -106,13 +114,20 @@ fun fetchPetsBySpecies(
     species: String,
     onComplete: (Boolean, List<PetData>, String?) -> Unit
 ){
+    val normalizedSpecies = species.trim().lowercase()
     FirebaseFirestore.getInstance()
         .collection("mascotas")
-        .whereEqualTo("petSpecies", species)
+        .whereEqualTo("petSpecies", normalizedSpecies)
         .get()
         .addOnSuccessListener { querySnapshot ->
             val pets = querySnapshot.documents.mapNotNull { doc ->
-                doc.toObject(PetData::class.java)?.copy(id = doc.id)
+                // Verificamos el campo crudo primero
+                val isAdoptedRaw = doc.getBoolean("isAdopted") ?: false
+                if (isAdoptedRaw) {
+                    null
+                } else {
+                    doc.toObject(PetData::class.java)?.copy(id = doc.id)
+                }
             }
             onComplete(true, pets, null)
         }
@@ -120,6 +135,10 @@ fun fetchPetsBySpecies(
             onComplete(false, emptyList(), e.localizedMessage)
         }
 }
+
+
+
+
 
 
 

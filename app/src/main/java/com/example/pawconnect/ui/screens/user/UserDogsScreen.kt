@@ -1,19 +1,14 @@
 package com.example.pawconnect.ui.screens.user
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -43,10 +38,10 @@ fun UserDogsScreen(navController: NavController) {
     LaunchedEffect(Unit) {
         fetchPetsBySpecies("perro") { success, pets, error ->
             if (success) {
-                petsList = pets ?: emptyList()
+                petsList = pets
                 filteredPets = petsList
             } else {
-                errorMessage = error ?: "Error desconocido"
+                errorMessage = error ?: "Error al cargar perros"
             }
             loading = false
         }
@@ -59,9 +54,13 @@ fun UserDogsScreen(navController: NavController) {
         ) {
             FiltrosContent(
                 onFiltrosAplicados = { tamaño, genero ->
-                    filteredPets = petsList.filter { pet ->
-                        (tamaño.isEmpty() || pet.petSize == tamaño) &&
-                                (genero.isEmpty() || pet.petSex == genero)
+                    filteredPets = if (tamaño.isEmpty() && genero.isEmpty()) {
+                        petsList
+                    } else {
+                        petsList.filter { pet ->
+                            (tamaño.isEmpty() || pet.petSize.equals(tamaño, ignoreCase = true)) &&
+                                    (genero.isEmpty() || pet.petSex.equals(genero, ignoreCase = true))
+                        }
                     }
                     showFiltros = false
                 }
@@ -73,26 +72,32 @@ fun UserDogsScreen(navController: NavController) {
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = "Perfil",
-                            color = MaterialTheme.colorScheme.onPrimary,
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold
+                    Text(
+                        text = "Perros en Adopción",
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                },
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Regresar",
+                            tint = MaterialTheme.colorScheme.onPrimary
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        IconButton(
-                            onClick = { showFiltros = true }
-                        ) {
-                            Image(
-                                painter = painterResource(id = R.drawable.filtro),
-                                contentDescription = "Logo filtro",
-                                modifier = Modifier.size(300.dp)
-                            )
-                        }
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
+                actions = {
+                    IconButton(onClick = { showFiltros = true }) {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = "Filtrar",
+                            tint = MaterialTheme.colorScheme.onPrimary
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary
                 )
             )
@@ -109,6 +114,7 @@ fun UserDogsScreen(navController: NavController) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .background(MaterialTheme.colorScheme.background)
         ) {
             when {
                 loading -> {
@@ -117,8 +123,16 @@ fun UserDogsScreen(navController: NavController) {
                 errorMessage.isNotEmpty() -> {
                     Text(
                         text = errorMessage,
-                        color = Color.Red,
-                        modifier = Modifier.align(Alignment.Center)
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.align(Alignment.Center),
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                filteredPets.isEmpty() -> {
+                    Text(
+                        text = "No se encontraron perros disponibles.",
+                        modifier = Modifier.align(Alignment.Center),
+                        style = MaterialTheme.typography.bodyLarge
                     )
                 }
                 else -> {
@@ -143,4 +157,3 @@ fun UserDogsScreen(navController: NavController) {
         }
     }
 }
-

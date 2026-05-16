@@ -6,6 +6,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.material3.TopAppBarDefaults.centerAlignedTopAppBarColors
 import androidx.compose.runtime.*
@@ -23,6 +25,7 @@ import com.example.pawconnect.R
 import com.example.pawconnect.Screen
 import com.example.pawconnect.repository.PetData
 import com.example.pawconnect.repository.FavoritesRepository
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
 
@@ -32,15 +35,23 @@ fun PetDetailScreen(navController: NavController, petId: String) {
     var pet by remember { mutableStateOf<PetData?>(null) }
     var loading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf("") }
-    // Estado para determinar si la mascota ya está en favoritos
     var isFavorite by remember { mutableStateOf(false) }
+    var userType by remember { mutableStateOf("") }
+    
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
+    val auth = FirebaseAuth.getInstance()
+    val db = FirebaseFirestore.getInstance()
 
-    // Cargar los datos de la mascota desde la colección "mascotas"
     LaunchedEffect(petId) {
-        FirebaseFirestore.getInstance()
-            .collection("mascotas")
+        val userId = auth.currentUser?.uid
+        if (userId != null) {
+            db.collection("users").document(userId).get().addOnSuccessListener { doc ->
+                userType = doc.getString("tipoCuenta") ?: ""
+            }
+        }
+
+        db.collection("mascotas")
             .document(petId)
             .get()
             .addOnSuccessListener { document ->
@@ -78,7 +89,7 @@ fun PetDetailScreen(navController: NavController, petId: String) {
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(
-                            painter = painterResource(id = R.drawable.icon_huella),
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Regresar",
                             tint = MaterialTheme.colorScheme.onPrimary
                         )
@@ -183,63 +194,77 @@ fun PetDetailScreen(navController: NavController, petId: String) {
                                 }
                             }
                             Spacer(modifier = Modifier.height(16.dp))
-                            // Botón para agregar o eliminar favorito según el estado
-                            if (!isFavorite) {
+                            
+                            if (userType == "Refugio") {
                                 Button(
                                     onClick = {
-                                        FavoritesRepository.addFavorite(petId = pet!!.id) { success, error ->
-                                            coroutineScope.launch {
-                                                if (success) {
-                                                    snackbarHostState.showSnackbar("Mascota agregada a favoritos")
-                                                    isFavorite = true
-                                                    navController.navigate(Screen.Favorite.route)  // Navega a Favoritos
-                                                } else {
-                                                    snackbarHostState.showSnackbar("Error al agregar: ${error ?: "Error desconocido"}")
+                                        navController.navigate(Screen.ShelterEditPet.route.replace("{petId}", pet!!.id))
+                                    },
+                                    modifier = Modifier.fillMaxWidth(0.8f),
+                                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                                    shape = RoundedCornerShape(12.dp)
+                                ) {
+                                    Text("Editar información", fontSize = 18.sp, color = MaterialTheme.colorScheme.onPrimary)
+                                }
+                            } else {
+                                // Botón para agregar o eliminar favorito según el estado
+                                if (!isFavorite) {
+                                    Button(
+                                        onClick = {
+                                            FavoritesRepository.addFavorite(petId = pet!!.id) { success, error ->
+                                                coroutineScope.launch {
+                                                    if (success) {
+                                                        snackbarHostState.showSnackbar("Mascota agregada a favoritos")
+                                                        isFavorite = true
+                                                        navController.navigate(Screen.Favorite.route)  // Navega a Favoritos
+                                                    } else {
+                                                        snackbarHostState.showSnackbar("Error al agregar: ${error ?: "Error desconocido"}")
+                                                    }
                                                 }
                                             }
+                                        },
+                                        modifier = Modifier.fillMaxWidth(0.8f),
+                                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                                        shape = RoundedCornerShape(12.dp)
+                                    ) {
+                                        Text("Agregar a favoritos", fontSize = 18.sp, color = MaterialTheme.colorScheme.onPrimary)
+                                    }
+                                } else {
+                                    Button(
+                                        onClick = {
+                                            FavoritesRepository.removeFavorite(petId = pet!!.id) { success, error ->
+                                                coroutineScope.launch {
+                                                    if (success) {
+                                                        snackbarHostState.showSnackbar("Mascota eliminada de favoritos")
+                                                        isFavorite = false
+                                                        navController.navigate(Screen.Favorite.route)  // Navega a Favoritos
+                                                    } else {
+                                                        snackbarHostState.showSnackbar("Error al eliminar: ${error ?: "Error desconocido"}")
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        modifier = Modifier.fillMaxWidth(0.8f),
+                                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
+                                        shape = RoundedCornerShape(12.dp)
+                                    ) {
+                                        Text("Eliminar de favoritos", fontSize = 18.sp, color = MaterialTheme.colorScheme.onPrimary)
+                                    }
+                                }
+                                Spacer(modifier = Modifier.height(8.dp))
+                                // Botón "Adóptame" (opcional)
+                                Button(
+                                    onClick = {
+                                        pet?.let { safePet ->
+                                            navController.navigate("FormularioAdoptame/${safePet.id}")
                                         }
                                     },
                                     modifier = Modifier.fillMaxWidth(0.8f),
                                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                                     shape = RoundedCornerShape(12.dp)
                                 ) {
-                                    Text("Agregar a favoritos", fontSize = 18.sp, color = MaterialTheme.colorScheme.onPrimary)
+                                    Text("Adóptame", fontSize = 18.sp, color = MaterialTheme.colorScheme.onPrimary)
                                 }
-                            } else {
-                                Button(
-                                    onClick = {
-                                        FavoritesRepository.removeFavorite(petId = pet!!.id) { success, error ->
-                                            coroutineScope.launch {
-                                                if (success) {
-                                                    snackbarHostState.showSnackbar("Mascota eliminada de favoritos")
-                                                    isFavorite = false
-                                                    navController.navigate(Screen.Favorite.route)  // Navega a Favoritos
-                                                } else {
-                                                    snackbarHostState.showSnackbar("Error al eliminar: ${error ?: "Error desconocido"}")
-                                                }
-                                            }
-                                        }
-                                    },
-                                    modifier = Modifier.fillMaxWidth(0.8f),
-                                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
-                                    shape = RoundedCornerShape(12.dp)
-                                ) {
-                                    Text("Eliminar de favoritos", fontSize = 18.sp, color = MaterialTheme.colorScheme.onPrimary)
-                                }
-                            }
-                            Spacer(modifier = Modifier.height(8.dp))
-                            // Botón "Adóptame" (opcional)
-                            Button(
-                                onClick = {
-                                    pet?.let { safePet ->
-                                        navController.navigate("FormularioAdoptame/${safePet.id}")
-                                    }
-                                },
-                                modifier = Modifier.fillMaxWidth(0.8f),
-                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                                shape = RoundedCornerShape(12.dp)
-                            ) {
-                                Text("Adóptame", fontSize = 18.sp, color = MaterialTheme.colorScheme.onPrimary)
                             }
 
                         }

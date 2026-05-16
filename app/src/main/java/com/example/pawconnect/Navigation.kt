@@ -9,6 +9,9 @@ import androidx.navigation.navArgument
 import com.example.pawconnect.ui.screens.LoginScreen
 import com.example.pawconnect.ui.screens.SignUpScreen
 import com.example.pawconnect.ui.screens.SuccessScreen
+import com.example.pawconnect.ui.screens.user.AdoptionSuccessScreen
+import com.example.pawconnect.ui.screens.shelter.ShelterEditPetScreen
+import com.example.pawconnect.ui.screens.shelter.PetSuccessScreen
 import com.example.pawconnect.ui.screens.shelter.ShelterHomeScreen
 import com.example.pawconnect.ui.screens.shelter.ShelterProfileScreen
 import com.example.pawconnect.ui.screens.shelter.ShelterRegistrationPetsScreen
@@ -55,6 +58,7 @@ sealed class Screen(val route: String) {
     object GuiaDeAdopcion: Screen("guia_de_adopcion")
     object EditProfileScreen: Screen("editar_perfil")
     object SuccessUser: Screen("success_user")
+    object AdoptionSuccess : Screen("adoption_success")
     object NotificationPreferences: Screen("notificaciones")
 
     // Refugio
@@ -67,6 +71,8 @@ sealed class Screen(val route: String) {
     object ShelterPruebas : Screen("shelter_pruebas")
     object ShelterRequestDetail : Screen("shelter_request_detail/{requestId}")
     object ShelterRevisionPetsScreen : Screen("shelter_revision_pets")
+    object PetSuccess : Screen("pet_success")
+    object ShelterEditPet : Screen("shelter_edit_pet/{petId}")
 
 
     // Otros
@@ -109,6 +115,7 @@ fun AppNavigation(navController: NavHostController) {
             FormularioAdoptame(navController, petId)
         }
         composable(Screen.SuccessUser.route) { SuccessUser(navController) }
+        composable(Screen.AdoptionSuccess.route) { AdoptionSuccessScreen(navController) }
         composable(Screen.NotificationPreferences.route) {NotificationPreferences(navController) }
 
         // Refugio
@@ -131,6 +138,14 @@ fun AppNavigation(navController: NavHostController) {
         composable(Screen.ShelterRevisionPetsScreen.route) { ShelterRevisionPetsScreen(navController) }
         composable(Screen.ShelterCatsScreen.route) { ShelterCatsScreen(navController) }
         composable(Screen.ShelterDogsScreen.route) { ShelterDogsScreen(navController) }
+        composable(Screen.PetSuccess.route) { PetSuccessScreen(navController) }
+        composable(
+            route = Screen.ShelterEditPet.route,
+            arguments = listOf(navArgument("petId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val petId = backStackEntry.arguments?.getString("petId") ?: ""
+            ShelterEditPetScreen(navController, petId)
+        }
 
     }
 }

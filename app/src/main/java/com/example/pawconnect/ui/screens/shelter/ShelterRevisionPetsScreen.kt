@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -28,7 +30,6 @@ fun ShelterRevisionPetsScreen(navController: NavController) {
     var loading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf("") }
 
-    // Cargar solicitudes pendientes al iniciar
     LaunchedEffect(Unit) {
         AdoptionRequestsRepository.fetchPendingRequests { success, list, error ->
             if (success) {
@@ -44,7 +45,17 @@ fun ShelterRevisionPetsScreen(navController: NavController) {
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
-                    Text("Revision de Solicitudes", fontSize = 20.sp, fontWeight = FontWeight.Bold)},
+                    Text("Revisión de Solicitudes", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                },
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Regresar",
+                            tint = MaterialTheme.colorScheme.onPrimary
+                        )
+                    }
+                },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     titleContentColor = MaterialTheme.colorScheme.onPrimary
@@ -84,8 +95,6 @@ fun ShelterRevisionPetsScreen(navController: NavController) {
                     ) {
                         items(requestsList) { request ->
                             RequestItemCard(request) {
-                                // Acción al pulsar "Revisar"
-                                // pantalla de detalle de la solicitud
                                 navController.navigate("ShelterRequestDetail/${request.requestId}")
                             }
                         }
@@ -101,13 +110,12 @@ fun RequestItemCard(request: AdoptionRequest, onClickReview: () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surface)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Podrías poner una imagen del usuario, o un icono
             Image(
                 painter = painterResource(id = R.drawable.icon_user),
                 contentDescription = "Usuario",
@@ -123,17 +131,22 @@ fun RequestItemCard(request: AdoptionRequest, onClickReview: () -> Unit) {
             ) {
                 Text(
                     text = request.userName,
-                    style = MaterialTheme.typography.titleMedium
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "La solicitud de adopción se encuentra pendiente. Favor de revisarla.",
-                    style = MaterialTheme.typography.bodySmall
+                    text = "La solicitud de adopción se encuentra pendiente.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
             Spacer(modifier = Modifier.width(16.dp))
 
-            Button(onClick = onClickReview) {
+            Button(
+                onClick = onClickReview,
+                shape = RoundedCornerShape(8.dp)
+            ) {
                 Text("Revisar")
             }
         }

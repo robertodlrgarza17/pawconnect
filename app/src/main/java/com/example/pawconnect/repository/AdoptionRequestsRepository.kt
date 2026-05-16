@@ -75,16 +75,28 @@ object AdoptionRequestsRepository {
 
     /**
      * Actualiza el estado de una solicitud de adopción (aprobada, rechazada, etc.).
+     * Si se aprueba, marca a la mascota como adoptada.
      */
     fun updateRequestStatus(
         requestId: String,
+        petId: String, // Necesitamos el petId para actualizar su estado
         newStatus: String,
         onComplete: (Boolean, String?) -> Unit
     ) {
         val db = FirebaseFirestore.getInstance()
-        db.collection("adoptionRequests")
-            .document(requestId)
-            .update("status", newStatus)
+        val batch = db.batch()
+
+        // 1. Actualizar estado de la solicitud
+        val requestRef = db.collection("adoptionRequests").document(requestId)
+        batch.update(requestRef, "status", newStatus)
+
+        // 2. Si se aprueba, marcar mascota como adoptada
+        if (newStatus == "aprobada") {
+            val petRef = db.collection("mascotas").document(petId)
+            batch.update(petRef, "isAdopted", true)
+        }
+
+        batch.commit()
             .addOnSuccessListener {
                 onComplete(true, null)
             }

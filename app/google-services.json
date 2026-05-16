@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "651322795984",
-    "project_id": "powconnect-ba9f1",
-    "storage_bucket": "powconnect-ba9f1.firebasestorage.app"
+    "project_number": "506336130376",
+    "project_id": "pawconnectvvys",
+    "storage_bucket": "pawconnectvvys.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:651322795984:android:f973e576a6e26a602f3bd5",
+        "mobilesdk_app_id": "1:506336130376:android:41f0bb8ed71d47515eef7d",
         "android_client_info": {
           "package_name": "com.example.pawconnect"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyAstE1UIv98xLMX64xq51GkBx5VNk5_tz4"
+          "current_key": "AIzaSyCS_BKl-OqGc7BP6czZVbxp8vybb8avrOU"
         }
       ],
       "services": {

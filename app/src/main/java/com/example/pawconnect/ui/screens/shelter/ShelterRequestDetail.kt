@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -83,7 +85,7 @@ fun ShelterRequestDetailScreen(navController: NavController, requestId: String) 
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(
-                            painter = painterResource(id = R.drawable.icon_huella),
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Regresar",
                             tint = MaterialTheme.colorScheme.onPrimary
                         )
@@ -114,7 +116,7 @@ fun ShelterRequestDetailScreen(navController: NavController, requestId: String) 
                         request = request!!,
                         pet = pet!!,
                         onAccept = {
-                            AdoptionRequestsRepository.updateRequestStatus(request!!.requestId, "aprobada") { success, error ->
+                            AdoptionRequestsRepository.updateRequestStatus(request!!.requestId, request!!.petId, "aprobada") { success, error ->
                                 if (success) {
                                     navController.popBackStack()
                                 } else {
@@ -123,7 +125,7 @@ fun ShelterRequestDetailScreen(navController: NavController, requestId: String) 
                             }
                         },
                         onReject = {
-                            AdoptionRequestsRepository.updateRequestStatus(request!!.requestId, "rechazada") { success, error ->
+                            AdoptionRequestsRepository.updateRequestStatus(request!!.requestId, request!!.petId, "rechazada") { success, error ->
                                 if (success) {
                                     navController.popBackStack()
                                 } else {

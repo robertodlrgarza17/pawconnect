@@ -1,5 +1,6 @@
 package com.example.pawconnect.ui.screens.shelter
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -10,6 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -20,33 +22,23 @@ import com.example.pawconnect.Screen
 import com.example.pawconnect.R
 import com.example.pawconnect.ui.screens.components.ShelterBottomNavBar
 
-
 @Composable
 fun ShelterRegistrationPetsScreen(navController: NavController) {
-    val errorMessage by remember { mutableStateOf("") }
-
     Scaffold(
         topBar = {
-            // Barra personalizada (sin TopAppBar)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp),
-                horizontalArrangement = Arrangement.Start,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Botón de regreso
                 IconButton(onClick = { navController.popBackStack() }) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Regresar"
-                    )
+                    Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Regresar")
                 }
-
-                // Título
                 Text(
-                    text = "Registrar",
+                    text = "Registro de Mascota",
                     style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(start = 16.dp)
                 )
             }
@@ -59,56 +51,62 @@ fun ShelterRegistrationPetsScreen(navController: NavController) {
             )
         }
     ) { innerPadding ->
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+            Card(
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
+                modifier = Modifier.fillMaxWidth()
             ) {
-                // Ícono de la encuesta
-                Icon(
-                    painter = painterResource(id = R.drawable.icon_encuesta),
-                    contentDescription = "Icono de la encuesta",
-                    modifier = Modifier.size(64.dp)
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Descripción de la encuesta
-                Text(
-                    text = "Para continuar con el proceso de registro, será necesario llenar una encuesta.\n\n" +
-                            "La encuesta tiene como objetivo, recolectar información acerca de la mascota, así como algunos detalles.\n\n" +
-                            "Cuando se encuentre listo, de clic en 'Comenzar encuesta'.",
-                    style = MaterialTheme.typography.bodyLarge,
-                    textAlign = TextAlign.Center
-                )
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                // Botón "Comenzar encuesta"
-                Button(
-                    onClick = {
-                        navController.navigate(Screen.ShelterFormularioPets.route)
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4A5D80))
+                Column(
+                    modifier = Modifier.padding(32.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
-                    Text("Comenzar encuesta", fontSize = 16.sp)
-                }
+                    Icon(
+                        painter = painterResource(id = R.drawable.icon_encuesta),
+                        contentDescription = null,
+                        modifier = Modifier.size(80.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
 
-                // Mostrar mensaje de error
-                if (errorMessage.isNotEmpty()) {
-                    Text(text = errorMessage, color = Color.Red, modifier = Modifier.padding(top = 8.dp))
+                    Text(
+                        text = "Encuesta de Registro",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+
+                    Text(
+                        text = "Para continuar, es necesario completar una encuesta para recolectar información detallada sobre la mascota.",
+                        style = MaterialTheme.typography.bodyLarge,
+                        textAlign = TextAlign.Center,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    Button(
+                        onClick = { navController.navigate(Screen.ShelterFormularioPets.route) },
+                        modifier = Modifier.fillMaxWidth().height(56.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4A5D80))
+                    ) {
+                        Text("Comenzar encuesta", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    }
                 }
             }
         }
     }
 }
 
+@Preview(showBackground = true)
+@Composable
+fun ShelterRegistrationPetsScreenPreview() {
+    val navController = rememberNavController()
+    ShelterRegistrationPetsScreen(navController = navController)
+}
